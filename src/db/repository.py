@@ -24,10 +24,23 @@ class BaseRepository(Generic[T]):
         except exc.IntegrityError as e:
             self.session.rollback()
             if isinstance(e.orig, errors.UniqueViolation):
-                logger.warning(f'The {obj} is already in the table {obj.__tablename__}')
+                logger.warning(f'The object is already in the table {T.__tablename__}: {obj}')
             else:
                 raise e
         else:
             self.session.commit()
-            logger.info(f'Added new {obj} to the table {obj.__tablename__}')
+            logger.info(f'Added new object to the table {T.__tablename__}: {obj}')
         return obj
+
+    def add_all(self, objs: list[T]) -> list[T]:
+        try:
+            self.session.add_all(objs)
+        except exc.IntegrityError as e:
+            self.session.rollback()
+            if isinstance(e.orig, errors.UniqueViolation):
+                logger.warning(f'The objects is already in the table {T.__tablename__}: {objs}')
+            else:
+                raise e
+        else:
+            self.session.commit()
+        return objs
